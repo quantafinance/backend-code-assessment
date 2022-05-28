@@ -13,6 +13,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import { DataGrid, GridColDef, GridFilterModel } from "@mui/x-data-grid";
 
 import SearchIcon from "@mui/icons-material/Search";
+import { Typography } from "@mui/material";
 
 async function getLoans(page: number = 0, pageSize: number = 10, searchTerm: string = ""): Promise<any> {
   const res = await fetch(`/api/loans?page=${page}&pageSize=${pageSize}&searchTerm=${searchTerm}`);
@@ -44,10 +45,11 @@ const Home: NextPage = () => {
     getLoans(page, pageSize, searchTerm)
   );
 
-  const [rows, rowCount] = useMemo(() => {
+  const [rows, rowCount, loanAmountTotal] = useMemo(() => {
     if (typeof data === 'undefined') {
       return [[], 0]
     }
+    console.log('data', data)
     return data ?? [[], 0]
   }, [data])
 
@@ -92,6 +94,7 @@ const Home: NextPage = () => {
           pagination
           onFilterModelChange={onSearchHandler}
         />
+        <Typography style={{textAlign: 'right'}} variant="h5" gutterBottom component="div">Total Loan Amount: $ {loanAmountTotal}</Typography>
       </Container>
     </>
   );

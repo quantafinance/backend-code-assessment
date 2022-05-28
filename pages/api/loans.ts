@@ -45,7 +45,19 @@ export default async function handler(
       limit ${Number(pageSize)} offset ${Number(offset)}
     `)
 
-    res.status(200).json([camelcaseKeys(result.rows), Number(recordCount.rows[0].count)])
+    const total = await client.query(`
+      select
+        sum(amount) AS amount
+      from loan t1
+      left join address t2
+          on t1.address_id = t2.id
+      left join company t3
+          on t1.company_id = t3.id
+      where t3.name ILIKE '%${searchTerm}%'
+      limit ${Number(pageSize)} offset ${Number(offset)}
+    `)
+
+    res.status(200).json([camelcaseKeys(result.rows), Number(recordCount.rows[0].count), Number(total.rows[0].amount)])
   } catch (err: any) {
       console.log(err)
     res.status(500).send(err.message)
