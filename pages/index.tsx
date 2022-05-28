@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { NextPage } from "next";
 
 import { useQuery } from "react-query";
@@ -10,12 +10,12 @@ import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
 import InputAdornment from "@mui/material/InputAdornment";
 
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { DataGrid, GridColDef, GridFilterModel } from "@mui/x-data-grid";
 
 import SearchIcon from "@mui/icons-material/Search";
 
-async function getLoans(page: number = 0, pageSize: number = 10): Promise<any> {
-  const res = await fetch(`/api/loans?page=${page}&pageSize=${pageSize}`);
+async function getLoans(page: number = 0, pageSize: number = 10, searchTerm: string = ""): Promise<any> {
+  const res = await fetch(`/api/loans?page=${page}&pageSize=${pageSize}&searchTerm=${searchTerm}`);
   return res.json();
 }
 
@@ -41,7 +41,7 @@ const Home: NextPage = () => {
   }), [page, pageSize])
 
   const { isLoading, data } = useQuery(["loans", queryOptions.page, queryOptions.pageSize], () =>
-    getLoans(page, pageSize)
+    getLoans(page, pageSize, searchTerm)
   );
 
   const [rows, rowCount] = useMemo(() => {
@@ -50,6 +50,13 @@ const Home: NextPage = () => {
     }
     return data ?? [[], 0]
   }, [data])
+
+  const onSearchHandler = (e: Record<string, any>) => {
+    const newSearch = e.target.value
+    getLoans(page, pageSize, newSearch)
+    console.log("newSearch", newSearch)
+    setSearchTerm(newSearch)
+  }
 
   return (
     <>
@@ -68,6 +75,7 @@ const Home: NextPage = () => {
               </InputAdornment>
             ),
           }}
+          onChange={onSearchHandler}
         />
         <DataGrid
           rows={rows}
@@ -80,8 +88,9 @@ const Home: NextPage = () => {
           paginationMode="server"
           onPageSizeChange={(pageSize) => setPageSize(pageSize)}
           onPageChange={(page) => setPage(page)}
-          // rowsPerPageOptions={[5, 10, 20]}
-          // pagination
+          rowsPerPageOptions={[5, 10, 20]}
+          pagination
+          onFilterModelChange={onSearchHandler}
         />
       </Container>
     </>

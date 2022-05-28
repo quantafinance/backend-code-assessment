@@ -10,9 +10,13 @@ export default async function handler(
 ) {
   const client = getClient()
   try {
-    const { page, pageSize } = _req.query
+    const { page, pageSize, searchTerm } = _req.query
     const offset = Number(pageSize) * Number(page)
     await client.connect()
+
+    console.log('searchTerm', searchTerm)
+
+    // const searchTerm = ''
 
     const recordCount = await client.query(`
       select count(*) from loan t1
@@ -20,7 +24,8 @@ export default async function handler(
           on t1.address_id = t2.id
       left join company t3
           on t1.company_id = t3.id
-    `)
+      where t3.name ILIKE '%${searchTerm}%'
+      `)
 
     const result = await client.query(`
       select
@@ -35,6 +40,7 @@ export default async function handler(
           on t1.address_id = t2.id
       left join company t3
           on t1.company_id = t3.id
+      where t3.name ILIKE '%${searchTerm}%'
       order by id
       limit ${Number(pageSize)} offset ${Number(offset)}
     `)
