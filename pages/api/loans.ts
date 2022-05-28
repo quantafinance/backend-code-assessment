@@ -9,7 +9,10 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const client = getClient()
+  console.log('req', _req.query)
   try {
+    const { page, pageSize } = _req.query
+
     await client.connect()
     const result = await client.query(`
         select
@@ -24,6 +27,7 @@ export default async function handler(
             on t1.address_id = t2.id
         left join company t3
             on t1.company_id = t3.id
+        limit ${pageSize} offset ${page}
         `)
 
     res.status(200).json([camelcaseKeys(result.rows), result.rowCount])

@@ -15,7 +15,7 @@ import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
 
 async function getLoans(page: number = 0, pageSize: number = 10): Promise<any> {
-  const res = await fetch("/api/loans");
+  const res = await fetch(`/api/loans?page=${page}&pageSize=${pageSize}`);
   return res.json();
 }
 
@@ -68,6 +68,8 @@ const Home: NextPage = () => {
           pageSize={pageSize}
           onPageSizeChange={(pageSize) => setPageSize(pageSize)}
           onPageChange={(page) => setPage(page)}
+          rowsPerPageOptions={[5, 10, 20]}
+          pagination
         />
       </Container>
     </>
