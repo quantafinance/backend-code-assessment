@@ -36,10 +36,10 @@ export default async function handler(
       left join company t3
           on t1.company_id = t3.id
       order by id
-      limit ${pageSize} offset ${offset}
+      limit ${Number(pageSize)} offset ${Number(offset)}
     `)
 
-    res.status(200).json([camelcaseKeys(result.rows), recordCount.rows[0].count, pageSize, offset])
+    res.status(200).json([camelcaseKeys(result.rows), Number(recordCount.rows[0].count)])
   } catch (err: any) {
       console.log(err)
     res.status(500).send(err.message)

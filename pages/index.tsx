@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { NextPage } from "next";
 
 import { useQuery } from "react-query";
@@ -36,10 +36,20 @@ const Home: NextPage = () => {
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data } = useQuery(["loans", page, pageSize], () =>
+  const queryOptions = useMemo(() => ({
+    page, pageSize
+  }), [page, pageSize])
+
+  const { isLoading, data } = useQuery(["loans", queryOptions.page, queryOptions.pageSize], () =>
     getLoans(page, pageSize)
   );
-  const [rows, rowCount] = data ?? [[], 0];
+
+  const [rows, rowCount] = useMemo(() => {
+    if (typeof data === 'undefined') {
+      return [[], 0]
+    }
+    return data ?? [[], 0]
+  }, [data])
 
   return (
     <>
@@ -62,14 +72,16 @@ const Home: NextPage = () => {
         <DataGrid
           rows={rows}
           columns={columns}
+          loading={isLoading}
           autoHeight
           rowCount={rowCount}
           page={page}
           pageSize={pageSize}
+          paginationMode="server"
           onPageSizeChange={(pageSize) => setPageSize(pageSize)}
           onPageChange={(page) => setPage(page)}
-          rowsPerPageOptions={[5, 10, 20]}
-          pagination
+          // rowsPerPageOptions={[5, 10, 20]}
+          // pagination
         />
       </Container>
     </>
