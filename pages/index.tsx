@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { NextPage } from "next";
 
 import { useQuery } from "react-query";
@@ -10,12 +10,13 @@ import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
 import InputAdornment from "@mui/material/InputAdornment";
 
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { DataGrid, GridColDef, GridFilterModel } from "@mui/x-data-grid";
 
 import SearchIcon from "@mui/icons-material/Search";
+import { Typography } from "@mui/material";
 
-async function getLoans(page: number = 0, pageSize: number = 10): Promise<any> {
-  const res = await fetch("/api/loans");
+async function getLoans(page: number = 0, pageSize: number = 10, searchTerm: string = ""): Promise<any> {
+  const res = await fetch(`/api/loans?page=${page}&pageSize=${pageSize}&searchTerm=${searchTerm}`);
   return res.json();
 }
 
@@ -32,14 +33,32 @@ const columns: GridColDef[] = [
 ];
 
 const Home: NextPage = () => {
+  const defaultLoanData = [[], 0, 0]
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data } = useQuery(["loans", page, pageSize], () =>
-    getLoans(page, pageSize)
+  const queryOptions = useMemo(() => ({
+    page, pageSize
+  }), [page, pageSize])
+
+  const { isLoading, data, isSuccess, isRefetching, refetch } = useQuery(["loans", queryOptions.page, queryOptions.pageSize], () =>
+    getLoans(page, pageSize, searchTerm)
   );
-  const [rows, rowCount] = data ?? [[], 0];
+
+  const [rows, rowCount, loanAmountTotal] = useMemo(() => {
+    if (typeof data === 'undefined') {
+      return defaultLoanData
+    }
+    // console.log('data', data, isSuccess)
+    return isSuccess ? data : defaultLoanData
+  }, [data])
+
+  const onSearchHandler = (e: Record<string, any>) => {
+    const newSearch = e.target.value
+    setSearchTerm(newSearch)
+    refetch()
+  }
 
   return (
     <>
@@ -58,17 +77,23 @@ const Home: NextPage = () => {
               </InputAdornment>
             ),
           }}
+          onChange={onSearchHandler}
         />
         <DataGrid
           rows={rows}
           columns={columns}
+          loading={isLoading}
           autoHeight
           rowCount={rowCount}
           page={page}
           pageSize={pageSize}
+          paginationMode="server"
           onPageSizeChange={(pageSize) => setPageSize(pageSize)}
           onPageChange={(page) => setPage(page)}
+          rowsPerPageOptions={[5, 10, 20]}
+          pagination
         />
+        <Typography style={{textAlign: 'right'}} variant="h5" gutterBottom component="div">Total Loan Amount: $ {loanAmountTotal}</Typography>
       </Container>
     </>
   );
