@@ -33,6 +33,7 @@ const columns: GridColDef[] = [
 ];
 
 const Home: NextPage = () => {
+  const defaultLoanData = [[], 0, 0]
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,23 +42,22 @@ const Home: NextPage = () => {
     page, pageSize
   }), [page, pageSize])
 
-  const { isLoading, data } = useQuery(["loans", queryOptions.page, queryOptions.pageSize], () =>
+  const { isLoading, data, isSuccess, isRefetching, refetch } = useQuery(["loans", queryOptions.page, queryOptions.pageSize], () =>
     getLoans(page, pageSize, searchTerm)
   );
 
   const [rows, rowCount, loanAmountTotal] = useMemo(() => {
     if (typeof data === 'undefined') {
-      return [[], 0]
+      return defaultLoanData
     }
-    console.log('data', data)
-    return data ?? [[], 0]
+    // console.log('data', data, isSuccess)
+    return isSuccess ? data : defaultLoanData
   }, [data])
 
   const onSearchHandler = (e: Record<string, any>) => {
     const newSearch = e.target.value
-    getLoans(page, pageSize, newSearch)
-    console.log("newSearch", newSearch)
     setSearchTerm(newSearch)
+    refetch()
   }
 
   return (
@@ -92,7 +92,6 @@ const Home: NextPage = () => {
           onPageChange={(page) => setPage(page)}
           rowsPerPageOptions={[5, 10, 20]}
           pagination
-          onFilterModelChange={onSearchHandler}
         />
         <Typography style={{textAlign: 'right'}} variant="h5" gutterBottom component="div">Total Loan Amount: $ {loanAmountTotal}</Typography>
       </Container>
